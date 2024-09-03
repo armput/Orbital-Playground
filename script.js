@@ -4,6 +4,11 @@ function setup() {
   createCanvas(windowWidth, windowHeight);
 	noCursor();
 	angleMode(DEGREES);
+
+	let dotCount = floor((width * height) / 10000);
+	for (let i = 0; i < dotCount; i++) {
+		new Dot(random(width), random(height));
+	}
 }
 
 function draw() {
