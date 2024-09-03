@@ -1,15 +1,13 @@
+let center;
+
 function setup() {
   createCanvas(windowWidth, windowHeight);
 	noCursor();
-
-	let dotCount = floor((width * height) / 10000);
-	for (let i = 0; i < dotCount; i++) {
-		new Dot(random(width), random(height));
-	}
+	angleMode(DEGREES);
 }
 
 function draw() {
-	background(0, 0, 13);
+	background(0, 0, 0, 200);
 
 	dots.forEach(dot => {
 		dot.update();
@@ -50,7 +48,6 @@ function draw() {
 		text('stars: ' + stars.length, width, 40);
 		text('blackHoles: ' + blackHoles.length, width, 50);
 		text('whiteHoles: ' + whiteHoles.length, width, 60);
-		text('wormHoles: ' + wormHoles.length, width, 70);
 	}
 }
 

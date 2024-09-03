@@ -5,7 +5,7 @@ let particles = [];
 let stars = [];
 let blackHoles = [];
 let whiteHoles = [];
-let wormHoles = [];
+let wormholes = [];
 
 class Body {
 	constructor(x, y) {
@@ -15,7 +15,6 @@ class Body {
 
 		this.mass = 0;
 		this.maxMass = 1;
-		this.invMass = 1 / this.mass;
 		this.r = sqrt(this.mass) * 5;
 
 		this.isSolid = true;
@@ -28,6 +27,8 @@ class Body {
 		bodies.splice(bodies.indexOf(this), 1);
 	}
 
+	evolve() {}
+
 	applyForce(force) {
 		let _force = p5.Vector.div(force, this.mass);
 		this.acc.add(_force);
@@ -35,9 +36,12 @@ class Body {
 
 	attract(other) {
 		let force = p5.Vector.sub(this.pos, other.pos);
+		
 		let distance = force.mag();
-		distance = constrain(distance, 5, 25);
-		let strength = (this.mass * other.mass) / (distance * distance);
+		distance = constrain(distance, 0, 25);
+		
+		let strength = (other.mass * this.mass) / (distance * distance);
+		
 		force.setMag(strength);
 
 		return(force);
@@ -47,8 +51,8 @@ class Body {
 		let impactVec = p5.Vector.sub(this.pos, other.pos);
 		let distance = impactVec.mag();
 
-		if (distance <= this.r + other.r) {
-			let overlap = distance - (this.r + other.r);
+		if (distance <= this.r) {
+			let overlap = distance - this.r;
 			let dir = impactVec.copy();
 			
 			dir.setMag(overlap * 0.5);
@@ -104,6 +108,7 @@ class Body {
 			this.vel.y *= -1;
 		}
 
+		this.evolve();
 		this.show();
 	}
 }
@@ -131,12 +136,18 @@ class Particle extends Body {
 		super.destroy();
 		particles.splice(particles.indexOf(this), 1);
 	}
+
+	evolve() {
+		if (this.mass >= this.maxMass) {
+			new Star(this.pos.x, this.pos.y, this.mass);
+			this.destroy();
+		}
+	}
 	
 	show() {		
 		noStroke();
 		fill(this.color);
 		circle(this.pos.x, this.pos.y, this.r * 2);
-
 		super.show(255);
 	}
 
@@ -147,10 +158,20 @@ class Particle extends Body {
 }
 
 class Star extends Body {
-	constructor(x, y) {
+	constructor(x, y, mass, frozen) {
 		super(x, y);
-		this.mass = 20;
-		this.maxMass = 100;
+		
+		if (mass === undefined) {
+			this.mass = 20;
+		} else {
+			this.mass = mass;
+		}
+
+		if (frozen === true) {
+			this.isFrozen = true;
+		}
+		
+		this.maxMass = 120;
 		this.stage = floor(this.mass / 20);
 		stars.push(this);
 	}
@@ -160,59 +181,66 @@ class Star extends Body {
 		stars.splice(stars.indexOf(this), 1);
 	}
 
+	evolve() {
+		if (this.mass >= this.maxMass) {
+			new BlackHole(this.pos.x, this.pos.y, this.mass);
+			this.destroy();
+		}
+	}
+
 	show() {
 		noStroke();
 
-		if (this.stage == 5) {
-			fill(80, 175, 255, 150);
-			circle(this.pos.x, this.pos.y, (this.r * 2) + 16);
-			
-			fill(255);
-			circle(this.pos.x, this.pos.y, (this.r * 2) + 8);
-			
-			fill(175, 210, 255);
-			circle(this.pos.x, this.pos.y, this.r * 2);
-		}
-		
-		if (this.stage == 4) {
-			fill(255, 100, 0, 150);
-			circle(this.pos.x, this.pos.y, (this.r * 2) + 16);
+		if (this.stage == 1) {
+			fill(255, 200, 0, random(80, 120));
+			circle(this.pos.x, this.pos.y, (this.r * 2) + 7);
 
-			fill(255, 100, 0);
-			circle(this.pos.x, this.pos.y, (this.r * 2) + 8);
-
-			fill(255, 50, 0);
-			circle(this.pos.x, this.pos.y, this.r * 2);
-		}
-		
-		if (this.stage == 3) {
-			fill(255, 100, 0, 150);
-			circle(this.pos.x, this.pos.y, (this.r * 2) + 16);
-
-			fill(255, 255, 100);
-			circle(this.pos.x, this.pos.y, (this.r * 2) + 8);
-
-			fill(255, 120, 0);
+			fill(255, 200, 0);
 			circle(this.pos.x, this.pos.y, this.r * 2);
 		}
 		
 		if (this.stage == 2) {
-			fill(255, 100, 0, 150);
-			circle(this.pos.x, this.pos.y, (this.r * 2) + 16);
-
-			fill(255, 255, 100);
+			fill(255, 100, 0, random(120, 170));
 			circle(this.pos.x, this.pos.y, (this.r * 2) + 8);
 
-			fill(255, 200, 0);
+			fill(255, 255, 100);
 			circle(this.pos.x, this.pos.y, this.r * 2);
+
+			fill(255, 200, 0);
+			circle(this.pos.x, this.pos.y, (this.r * 2) - 7);
+		}
+		
+		if (this.stage == 3) {
+			fill(255, 100, 0, random(120, 170));
+			circle(this.pos.x, this.pos.y, (this.r * 2) + 8);
+
+			fill(255, 220, 80);
+			circle(this.pos.x, this.pos.y, this.r * 2);
+
+			fill(255, 120, 0);
+			circle(this.pos.x, this.pos.y, (this.r * 2) - 8);
 		}
 
-		if (this.stage == 1) {
-			fill(255, 200, 0, 100);
-			circle(this.pos.x, this.pos.y, (this.r * 2) + 10);
-			
-			fill(255, 200, 0);
+		if (this.stage == 4) {
+			fill(255, 100, 0, random(120, 170));
+			circle(this.pos.x, this.pos.y, (this.r * 2) + 8);
+
+			fill(255, 100, 0);
 			circle(this.pos.x, this.pos.y, this.r * 2);
+
+			fill(255, 50, 0);
+			circle(this.pos.x, this.pos.y, (this.r * 2) - 8);
+		}
+		
+		if (this.stage == 5) {
+			fill(80, 175, 255, random(120, 180));
+			circle(this.pos.x, this.pos.y, (this.r * 2) + 8)
+
+			fill(255);
+			circle(this.pos.x, this.pos.y, this.r * 2);
+
+			fill(175, 210, 255);
+			circle(this.pos.x, this.pos.y, (this.r * 2) - 7);
 		}
 
 		super.show(0);
@@ -220,7 +248,7 @@ class Star extends Body {
 
 	update() {
 		if (this.stage == 5) {
-			this.r = sqrt(this.mass) * 1.5;
+			this.r = sqrt(this.mass) * 1.75;
 		} else {
 			this.r = sqrt(this.mass) * 3;
 		}
@@ -230,9 +258,19 @@ class Star extends Body {
 }
 
 class BlackHole extends Body {
-	constructor(x, y) {
+	constructor(x, y, mass, frozen) {
 		super(x, y);
-		this.mass = 100;
+		
+		if (mass === undefined) {
+			this.mass = 120;
+		} else {
+			this.mass = mass;
+		}
+
+		if (frozen === true) {
+			this.isFrozen = true;
+		}
+		
 		this.r = sqrt(this.mass);
 		this.isSolid = false;
 		blackHoles.push(this);
@@ -247,7 +285,7 @@ class BlackHole extends Body {
 		noStroke();
 
 		fill(255, random(15, 30));
-		circle(this.pos.x, this.pos.y, (this.r * 2) + 11);
+		circle(this.pos.x, this.pos.y, (this.r * 2) + 10);
 
 		fill(255, random(30, 40));
 		circle(this.pos.x, this.pos.y, (this.r * 2) + 5);
@@ -260,6 +298,47 @@ class BlackHole extends Body {
 
 	update() {
 		this.r = sqrt(this.mass);
+		super.update();
+	}
+}
+
+class WhiteHole extends Body {
+	constructor(x, y, frozen) {
+		super(x, y);
+		this.mass = -120;
+		this.r = sqrt(abs(this.mass));
+		this.isSolid = false;
+
+		if (frozen === true) {
+			this.isFrozen = true;
+		}
+		
+		whiteHoles.push(this);
+	}
+
+	destroy() {
+		super.destroy();
+		whiteHoles.splice(whiteHoles.indexOf(this), 1);
+	}
+
+	show() {		
+		noStroke();
+
+		fill(255, random(70, 100));
+		circle(this.pos.x, this.pos.y, (this.r * 2) + 10);
+
+		
+		fill(255, random(90, 120));
+		circle(this.pos.x, this.pos.y, (this.r * 2) + 5);
+
+		fill(255);
+		circle(this.pos.x, this.pos.y, this.r * 2);
+
+		super.show(0);
+	}
+
+	update() {
+		this.r = sqrt(abs(this.mass));
 		super.update();
 	}
 }

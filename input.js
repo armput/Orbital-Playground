@@ -3,8 +3,8 @@ let creationMode = 'particle';
 
 let starUnlocked = true;
 let blackHoleUnlocked = true;
-let whiteHoleUnlocked = false;
-let wormHoleUnlocked = false;
+let whiteHoleUnlocked = true;
+let wormHoleUnlocked = true;
 
 function keyPressed() {
 	if (key === 'c') {
@@ -41,13 +41,15 @@ function mousePressed() {
 			new Star(mouseX, mouseY);
 		} else if (creationMode === 'blackHole') {
 			new BlackHole(mouseX, mouseY);
+		} else if (creationMode === 'whiteHole') {
+			new WhiteHole(mouseX, mouseY);
 		}
 	}
 
 	bodies.forEach(body => {
 		if (createVector(mouseX, mouseY).dist(body.pos) < body.r) {
 			if (clickMode === 'destroy') {
-				body.arraySplice();
+				body.destroy();
 			} else if (clickMode === 'freeze') {
 				body.isFrozen = !body.isFrozen;
 			}
